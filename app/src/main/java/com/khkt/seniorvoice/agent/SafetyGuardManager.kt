@@ -18,7 +18,7 @@ class SafetyGuardManager(
     private val scope: CoroutineScope,
     private val appExecutor: AndroidAppExecutor,
     private val speechManager: VietnameseSpeechManager,
-    private val llmPlanner: LocalLlmPlanner
+    private val llmPlanner: ApiLlmPlanner
 ) {
     private val _currentPlan = MutableStateFlow<AgentPlan?>(null)
     val currentPlan: StateFlow<AgentPlan?> = _currentPlan.asStateFlow()

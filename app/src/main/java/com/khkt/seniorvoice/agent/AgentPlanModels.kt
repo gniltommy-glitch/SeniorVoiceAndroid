@@ -16,9 +16,9 @@ enum class StepStatus {
 }
 
 enum class ExecutionEngineMode {
-    HYBRID_AUTO,     // Luật trước, Ollama tùy chọn, model miễn phí qua proxy, hỏi lại
-    OLLAMA_LAN_ONLY, // Gọi tới máy tính chạy Ollama qua Wi-Fi/Hotspot nội bộ
-    ON_DEVICE_EDGE   // Luật offline; chưa có runtime LLM trên điện thoại
+    API_DIRECT, // HTTPS requests using encrypted provider keys on the installation
+    API_PROXY   // Optional authenticated HTTPS API gateway
+
 }
 
 data class PlanStep(

@@ -1,5 +1,5 @@
 """SeniorVoice private LLM gateway. Python 3.10+, standard library only.
-Run behind an HTTPS reverse proxy. Never expose Ollama or provider keys to APKs.
+Run behind an HTTPS reverse proxy. Keep group provider keys outside APKs.
 """
 import collections
 from datetime import datetime, timezone
@@ -19,7 +19,7 @@ TOOLS = {
     'call_or_message_family': ['nickname', 'contact_name', 'phone', 'channel', 'message'],
     'navigate_or_book_ride': ['destination_name', 'address', 'mode'],
 }
-# Fixed fields keep one schema usable with Gemini, Groq strict mode and Ollama.
+# Fixed fields keep one schema usable with the hosted API providers.
 PARAMS = sorted({p for fields in TOOLS.values() for p in fields})
 SCHEMA = {
     'type': 'object', 'additionalProperties': False,
@@ -155,7 +155,7 @@ class Gateway:
                 return False
         return True
 
-    def plan(self, prompt, local_only=False):
+    def plan(self, prompt):
         configured = self.env.get('PROVIDER_ORDER', 'opengateway,openrouter,groq,gemini,deepseek').split(',')
         definitions = {
             'opengateway': ('OPENGATEWAY_API_KEY', 'qwen/qwen3.8-flash'),
@@ -163,11 +163,10 @@ class Gateway:
             'groq': ('GROQ_API_KEY', 'openai/gpt-oss-20b'),
             'deepseek': ('DEEPSEEK_API_KEY', 'deepseek-flash'),
             'gemini': ('GEMINI_API_KEY', 'gemini-3.5-flash-lite'),
-            'ollama': ('LOCAL_ENABLED', 'qwen2.5:3b'),
         }
-        providers = ['ollama'] if local_only else [p.strip() for p in configured]
+        providers = [p.strip() for p in configured]
         for provider in providers:
-            if provider not in definitions or (provider == 'ollama' and not local_only):
+            if provider not in definitions:
                 continue
             key_name, default_model = definitions[provider]
             key = self.env.get(key_name, '')
@@ -177,18 +176,9 @@ class Gateway:
                 continue
             model = self.env.get(provider.upper() + '_MODEL', default_model)
             try:
-                if self.free_only and not local_only and provider not in self.metered_fallbacks and not self.model_is_free(provider, model):
+                if self.free_only and provider not in self.metered_fallbacks and not self.model_is_free(provider, model):
                     continue
-                if provider == 'ollama':
-                    url = self.env.get('OLLAMA_URL', 'http://127.0.0.1:11434').rstrip('/')
-                    raw = self.transport(url + '/api/chat', {},
-                        {'model': model, 'stream': False, 'format': SCHEMA,
-                         'options': {'temperature': 0, 'num_predict': 2048},
-                         'messages': [{'role': 'system', 'content': SYSTEM}, {'role': 'user', 'content': prompt}]})
-                    if not raw.get('done'):
-                        raise ValueError('Incomplete response')
-                    content = raw['message']['content']
-                elif provider == 'gemini':
+                if provider == 'gemini':
                     raw = self.transport(
                         'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',
                         {'x-goog-api-key': key},
@@ -267,7 +257,7 @@ def handler_for(gateway):
 
         def do_POST(self):
             self.connection.settimeout(10)
-            if self.path not in ('/v1/plan', '/v1/local-plan'):
+            if self.path != '/v1/plan':
                 return self.reply(404, {'error': 'not_found'})
             status = gateway.authorize(self.headers.get('Authorization', ''))
             if status != 200:
@@ -285,7 +275,7 @@ def handler_for(gateway):
             if not gateway.inflight.acquire(blocking=False):
                 return self.reply(503, {'error': 'busy'})
             try:
-                result = gateway.plan(prompt, local_only=self.path == '/v1/local-plan')
+                result = gateway.plan(prompt)
                 self.reply(200 if result else 503, result or {'error': 'unavailable'})
             finally:
                 gateway.inflight.release()

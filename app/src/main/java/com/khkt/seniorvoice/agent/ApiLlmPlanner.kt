@@ -10,36 +10,31 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-/**
- * Tầng 3: Bộ Lập Kế Hoạch Đa Bước (Local LLM Planner & On-Device Semantic NLU)
- * - Hỗ trợ lưu cấu hình Ollama LAN bền vững qua SharedPreferences (Bug 5).
- * - Tôn trọng chế độ OLLAMA_LAN_ONLY: Báo lỗi kết nối rõ ràng thay vì âm thầm fallback (Bug 6).
- * - Hỗ trợ tách đa chuông báo thức cho nhiều loại thuốc trong cùng 1 câu nói (Bug 3).
- * - Hỗ trợ dẫn đường/đặt xe tới địa chỉ nhà người thân (Bug 4).
- * - Tích hợp Suy luận Triệu chứng Y tế ngầm định (#44) & Phân luồng Cấp cứu Đèn đỏ 115 (#45, T8).
- */
-class LocalLlmPlanner(
+/** API inference with local grounding and code-enforced safety checks. */
+class ApiLlmPlanner(
     private val familyRepository: FamilyMemoryRepository,
-    context: Context? = null
+    context: Context
 ) {
-    private val prefs = context?.getSharedPreferences("senior_voice_prefs", Context.MODE_PRIVATE)
+    private val keys = ApiKeyStore(context)
+    private val directClient = ApiPlannerClient(context, keys)
+    private val prefs = context.getSharedPreferences("senior_voice_prefs", Context.MODE_PRIVATE)
 
-    var ollamaServerUrl: String
-        get() = prefs?.getString("ollama_url", "") ?: ""
-        set(value) {
-            prefs?.edit()?.putString("ollama_url", value.trim())?.apply()
-        }
+    fun providerApiKey(provider: ApiProvider): String = keys.get(provider.name)
+    fun saveProviderApiKey(provider: ApiProvider, value: String) = keys.put(provider.name, value)
+
+    var allowMeteredProviders: Boolean
+        get() = prefs.getBoolean("api_allow_metered", false)
+        set(value) { prefs.edit().putBoolean("api_allow_metered", value).apply() }
 
     var executionMode: ExecutionEngineMode
         get() {
-            val saved = prefs?.getString("exec_mode", ExecutionEngineMode.HYBRID_AUTO.name)
-            return runCatching { ExecutionEngineMode.valueOf(saved ?: ExecutionEngineMode.HYBRID_AUTO.name) }
-                .getOrDefault(ExecutionEngineMode.HYBRID_AUTO)
+            val saved = prefs?.getString("exec_mode", ExecutionEngineMode.API_DIRECT.name)
+            return runCatching { ExecutionEngineMode.valueOf(saved ?: ExecutionEngineMode.API_DIRECT.name) }
+                .getOrDefault(ExecutionEngineMode.API_DIRECT)
         }
         set(value) {
             prefs?.edit()?.putString("exec_mode", value.name)?.apply()
@@ -117,49 +112,30 @@ class LocalLlmPlanner(
             referenceDate = referenceDate
         )
 
-        val rules = buildOnDeviceVietnamesePlan(grounding, enableGrounding, enableSafetyGuard, startMs)
+        val rules = buildDeterministicSafetyPlan(grounding, enableGrounding, enableSafetyGuard, startMs)
         val emergency = rules.thought.startsWith("PHÁT HIỆN TRIỆU CHỨNG ĐÈN ĐỎ")
-        // Emergency and deterministic simple commands never wait for a network call.
-        if (emergency || executionMode == ExecutionEngineMode.ON_DEVICE_EDGE || !enableGrounding) {
-            return@withContext rules
+        // Only safety rules and the developer baseline run without inference.
+        if (emergency || !enableGrounding) return@withContext rules
+        if (!cloudConsent) return@withContext askAgain(rules,
+            "Dạ bác nhờ người thân bật quyền dùng API trong Cài đặt AI trước nhé.")
+        val remote = if (executionMode == ExecutionEngineMode.API_PROXY) {
+            if (apiProxyUrl.isBlank() || apiDeviceToken.isBlank()) return@withContext askAgain(rules,
+                "Dạ bác nhờ người thân nhập địa chỉ gateway và mã thiết bị trong Cài đặt AI nhé.")
+            tryCallApiProxy(grounding, enableSafetyGuard, startMs)
+        } else {
+            if (!directClient.hasKey(allowMeteredProviders)) return@withContext askAgain(rules,
+                "Dạ bác nhờ người thân nhập ít nhất một API key trong Cài đặt AI nhé.")
+            val prompt = PrivatePlanPrompt.create(grounding, familyRepository.getMemoryData())
+            directClient.plan(prompt.text, allowMeteredProviders) { json, source ->
+                parseValidatedApiPlan(prompt.restore(json.toString()), grounding, enableSafetyGuard, startMs, source)
+            }
         }
-        if (executionMode == ExecutionEngineMode.HYBRID_AUTO && isConfidentRulePlan(rules, grounding)) {
-            return@withContext rules
-        }
-        if (executionMode == ExecutionEngineMode.OLLAMA_LAN_ONLY) {
-            return@withContext tryCallOllamaServer(grounding, enableSafetyGuard, startMs)
-                ?: askAgain(rules, "Máy chủ riêng chưa sẵn sàng. Bác nói ngắn lại hoặc nhờ người thân kiểm tra kết nối giúp con nhé.")
-        }
-        // The private server is optional. Public APIs are opt-in, behind our gateway.
-        if (ollamaServerUrl.isNotBlank()) {
-            tryCallOllamaServer(grounding, enableSafetyGuard, startMs)?.let { return@withContext it }
-        }
-        tryCallApiProxy(grounding, enableSafetyGuard, startMs)?.let { return@withContext it }
-        // Keep the existing deterministic conditional weather flow; do not execute a partial
-        // regex plan for an unrecognized compound command after network failure.
-        if (rules.steps.isNotEmpty() && (isConfidentRulePlan(rules, grounding) ||
-                (rules.steps.any { it.tool == "check_weather" } &&
-                 rules.steps.any { it.tool == "navigate_or_book_ride" }))) return@withContext rules
-        askAgain(rules, "Bác nói từng việc ngắn lại và cho con biết rõ người nhận, ngày giờ nhé.")
+        remote ?: askAgain(rules, "Dạ dịch vụ AI đang bận hoặc điện thoại mất mạng. Bác thử lại sau giúp con nhé.")
     }
 
     private fun askAgain(plan: AgentPlan, message: String) = plan.copy(
         steps = emptyList(), requiresConfirmation = false, confirmationPrompt = null,
         spokenResponse = message, engineUsed = "Clarification (Offline rules)")
-
-    private fun isConfidentRulePlan(plan: AgentPlan, grounding: GroundingAnalysisResult): Boolean {
-        val text = grounding.normalizedUtterance.lowercase()
-        if (plan.steps.size != 1 || Regex("nếu|nhưng|hay là|sau đó|rồi|và |chóng mặt|đau đầu|mệt|không |đừng ").containsMatchIn(text)) return false
-        val step = plan.steps.single()
-        return when (step.tool) {
-            "set_medication_alarm" -> Regex("báo thức|đặt chuông|hẹn giờ|nhắc|uống thuốc").containsMatchIn(text) &&
-                (Regex("giờ|[0-9]:").containsMatchIn(text) || grounding.matchedMedications.size == 1)
-            "check_weather" -> text.contains("thời tiết")
-            "call_or_message_family" -> grounding.matchedContacts.size == 1 && step.params["phone"].orEmpty().isNotBlank()
-            "navigate_or_book_ride" -> grounding.matchedPlaces.size == 1
-            else -> false
-        }
-    }
 
     private fun tryCallApiProxy(grounding: GroundingAnalysisResult, enableSafetyGuard: Boolean, startMs: Long): AgentPlan? {
         if (!cloudConsent || !apiProxyUrl.startsWith("https://") || apiDeviceToken.isBlank() ||
@@ -174,7 +150,7 @@ class LocalLlmPlanner(
                 check(response.isSuccessful)
                 val root = JSONObject(response.body?.string() ?: error("Empty response"))
                 val source = "${root.getString("provider")} (${root.getString("model")})"
-                parseOllamaJsonToPlan(privatePrompt.restore(root.getJSONObject("plan").toString()),
+                parseValidatedApiPlan(privatePrompt.restore(root.getJSONObject("plan").toString()),
                     grounding, enableSafetyGuard, startMs, source) ?: error("Invalid plan")
             }
         }.onSuccess { proxyFailures = 0 }.onFailure {
@@ -183,33 +159,12 @@ class LocalLlmPlanner(
         }.getOrNull()
     }
 
-    private fun tryCallOllamaServer(
-        grounding: GroundingAnalysisResult,
-        enableSafetyGuard: Boolean,
-        startMs: Long
-    ): AgentPlan? {
-        if (ollamaServerUrl.isBlank() || apiDeviceToken.isBlank()) return null
-        return runCatching {
-            val privatePrompt = PrivatePlanPrompt.create(grounding, familyRepository.getMemoryData())
-            val req = Request.Builder().url("${ollamaServerUrl.trimEnd('/')}/v1/local-plan")
-                .header("Authorization", "Bearer $apiDeviceToken")
-                .post(JSONObject().put("prompt", privatePrompt.text).toString()
-                    .toRequestBody("application/json; charset=utf-8".toMediaType())).build()
-            httpClient.newCall(req).execute().use { resp ->
-                if (!resp.isSuccessful) return null
-                val root = JSONObject(resp.body?.string() ?: return null)
-                parseOllamaJsonToPlan(privatePrompt.restore(root.getJSONObject("plan").toString()),
-                    grounding, enableSafetyGuard, startMs, "Ollama (${root.getString("model")})")
-            }
-        }.getOrNull()
-    }
-
-    private fun parseOllamaJsonToPlan(
+    private fun parseValidatedApiPlan(
         jsonContent: String,
         grounding: GroundingAnalysisResult,
         enableSafetyGuard: Boolean,
         startMs: Long,
-        source: String = "Ollama"
+        source: String = "API"
     ): AgentPlan? {
         return runCatching {
             val obj = JSONObject(jsonContent)
@@ -275,7 +230,7 @@ class LocalLlmPlanner(
         }.getOrNull()
     }
 
-    private fun buildOnDeviceVietnamesePlan(
+    private fun buildDeterministicSafetyPlan(
         grounding: GroundingAnalysisResult,
         enableGrounding: Boolean,
         enableSafetyGuard: Boolean,
@@ -355,7 +310,7 @@ class LocalLlmPlanner(
                 confirmationPrompt = "KHẨN CẤP: Xác nhận mở cuộc gọi Cấp cứu 115 & báo người thân ngay?",
                 groundingItems = grounding.groundingItems,
                 steps = steps,
-                engineUsed = "On-Device Rule & Semantic NLU (Offline Fallback)",
+                engineUsed = "Deterministic safety rules (no model)",
                 latencyMs = (System.currentTimeMillis() - startMs).coerceAtLeast(12L)
             )
         }
@@ -719,7 +674,7 @@ class LocalLlmPlanner(
             confirmationPrompt = confirmPrompt,
             groundingItems = grounding.groundingItems,
             steps = finalSteps,
-            engineUsed = "On-Device Rule & Semantic NLU (Offline Fallback)",
+            engineUsed = "Deterministic safety rules (no model)",
             latencyMs = (System.currentTimeMillis() - startMs).coerceAtLeast(15L)
         )
     }

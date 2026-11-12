@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.khkt.seniorvoice.agent.BenchmarkQueryItem
 import com.khkt.seniorvoice.agent.BenchmarkSummaryReport
-import com.khkt.seniorvoice.agent.LocalLlmPlanner
+import com.khkt.seniorvoice.agent.ApiLlmPlanner
 import com.khkt.seniorvoice.agent.RiskLevel
 import com.khkt.seniorvoice.agent.SingleBenchmarkEvaluation
 import kotlinx.coroutines.delay
@@ -73,7 +73,7 @@ private val BenchRed = Color(0xFFB91C1C)
 @Composable
 fun BenchmarkScreen(
     queries: List<BenchmarkQueryItem>,
-    planner: LocalLlmPlanner,
+    planner: ApiLlmPlanner,
     onAddCustomQuery: (region: String, utterance: String, expectedTools: List<String>, hasSensitive: Boolean) -> Unit,
     onRunQueryInLiveMode: (String) -> Unit
 ) {
@@ -622,7 +622,7 @@ private fun BenchmarkQueryCard(
 
 private suspend fun evaluateSingleQuery(
     query: BenchmarkQueryItem,
-    planner: LocalLlmPlanner
+    planner: ApiLlmPlanner
 ): SingleBenchmarkEvaluation {
     val baselinePlan = planner.createPlan(
         utterance = query.utterance,

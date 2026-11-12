@@ -12,8 +12,8 @@ android {
         applicationId = "com.khkt.seniorvoice"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0-KHKT"
+        versionCode = 2
+        versionName = "1.1.0-API"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -71,7 +71,7 @@ dependencies {
     // Coroutines for async LLM planning, Weather HTTP, and Benchmark execution
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // OkHttp for Zero-API-Key Open-Meteo Weather & Ollama LAN Server
+    // OkHttp for HTTPS weather and hosted model APIs
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Gson for JSON parsing of family_memory.json, benchmark_40_queries.json & AgentPlan

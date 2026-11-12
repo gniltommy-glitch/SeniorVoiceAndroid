@@ -66,8 +66,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.khkt.seniorvoice.agent.ApiProvider
 import com.khkt.seniorvoice.agent.ExecutionEngineMode
-import com.khkt.seniorvoice.agent.LocalLlmPlanner
+import com.khkt.seniorvoice.agent.ApiLlmPlanner
 import com.khkt.seniorvoice.agent.SafetyGuardManager
 import com.khkt.seniorvoice.context.FamilyMemoryRepository
 import com.khkt.seniorvoice.executor.AndroidAppExecutor
@@ -82,7 +83,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var familyRepository: FamilyMemoryRepository
     private lateinit var appExecutor: AndroidAppExecutor
     private lateinit var speechManager: VietnameseSpeechManager
-    private lateinit var llmPlanner: LocalLlmPlanner
+    private lateinit var llmPlanner: ApiLlmPlanner
     private lateinit var safetyGuardManager: SafetyGuardManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,7 +91,7 @@ class MainActivity : ComponentActivity() {
 
         familyRepository = FamilyMemoryRepository(applicationContext)
         appExecutor = AndroidAppExecutor(applicationContext)
-        llmPlanner = LocalLlmPlanner(familyRepository, applicationContext)
+        llmPlanner = ApiLlmPlanner(familyRepository, applicationContext)
 
         speechManager = VietnameseSpeechManager(applicationContext) { recognizedText, isConfirmationTurn ->
             lifecycleScope.launch {
@@ -335,7 +336,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun UserDataAndSettingsScreen(
     familyRepository: FamilyMemoryRepository,
-    planner: LocalLlmPlanner,
+    planner: ApiLlmPlanner,
     onProfileUpdated: () -> Unit,
     onReRunInitialSetup: () -> Unit,
     onToast: (String) -> Unit
@@ -367,7 +368,10 @@ private fun UserDataAndSettingsScreen(
     var medMinute by remember { mutableStateOf("0") }
     var medDosage by remember { mutableStateOf("") }
 
-    var ollamaUrl by remember { mutableStateOf(planner.ollamaServerUrl) }
+    val providerKeys = remember { androidx.compose.runtime.mutableStateMapOf<ApiProvider, String>().apply {
+        ApiProvider.entries.forEach { put(it, planner.providerApiKey(it)) }
+    } }
+    var allowMetered by remember { mutableStateOf(planner.allowMeteredProviders) }
     var proxyUrl by remember { mutableStateOf(planner.apiProxyUrl) }
     var deviceToken by remember { mutableStateOf(planner.apiDeviceToken) }
     var cloudConsent by remember { mutableStateOf(planner.cloudConsent) }
@@ -886,9 +890,8 @@ private fun UserDataAndSettingsScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         listOf(
-                            ExecutionEngineMode.HYBRID_AUTO to "Tự động: luật → server riêng → model miễn phí",
-                            ExecutionEngineMode.ON_DEVICE_EDGE to "Chỉ dùng luật offline (chưa có LLM trên máy)",
-                            ExecutionEngineMode.OLLAMA_LAN_ONLY to "Chỉ dùng Ollama LAN qua Wi-Fi (Báo lỗi nếu mất kết nối)"
+                            ExecutionEngineMode.API_DIRECT to "Gọi API trực tiếp bằng key trên điện thoại",
+                            ExecutionEngineMode.API_PROXY to "Dùng gateway API của nhóm (tùy chọn)"
                         ).forEach { (mode, label) ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 RadioButton(
@@ -902,41 +905,58 @@ private fun UserDataAndSettingsScreen(
                             }
                         }
 
-                        OutlinedTextField(
-                            value = ollamaUrl,
-                            onValueChange = { ollamaUrl = it },
-                            label = { Text("Proxy Ollama riêng, HTTPS (tùy chọn)") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = proxyUrl, onValueChange = { proxyUrl = it },
-                            label = { Text("Địa chỉ proxy API (https://...)") },
-                            modifier = Modifier.fillMaxWidth(), singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = deviceToken, onValueChange = { deviceToken = it },
-                            label = { Text("Mã thiết bị do người quản lý cấp") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth(), singleLine = true
-                        )
+                        if (selectedEngine == ExecutionEngineMode.API_DIRECT) {
+                            ApiProvider.entries.forEach { provider ->
+                                OutlinedTextField(
+                                    value = providerKeys[provider].orEmpty(),
+                                    onValueChange = { providerKeys[provider] = it },
+                                    label = { Text("${provider.label} API key") },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    modifier = Modifier.fillMaxWidth(), singleLine = true
+                                )
+                                Text(provider.model, fontSize = 11.sp)
+                            }
+                            Text("Nhập ít nhất một key. Thứ tự: Qwen → OpenRouter miễn phí → Groq → Gemini → DeepSeek.", fontSize = 12.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Switch(checked = allowMetered, onCheckedChange = { allowMetered = it })
+                                Text("Cho phép Gemini/DeepSeek dự phòng (có thể tính phí)", fontSize = 12.sp)
+                            }
+                        } else {
+                            OutlinedTextField(
+                                value = proxyUrl, onValueChange = { proxyUrl = it },
+                                label = { Text("Địa chỉ gateway API (https://...)") },
+                                modifier = Modifier.fillMaxWidth(), singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = deviceToken, onValueChange = { deviceToken = it },
+                                label = { Text("Mã thiết bị do người quản lý cấp") },
+                                visualTransformation = PasswordVisualTransformation(),
+                                modifier = Modifier.fillMaxWidth(), singleLine = true
+                            )
+                        }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Switch(checked = cloudConsent, onCheckedChange = { cloudConsent = it })
                             Text("Cho phép gửi câu nói đã thay tên/số điện thoại tới các dịch vụ AI đã cấu hình khi cần. Nội dung vẫn có thể chứa thông tin riêng tư.", fontSize = 12.sp)
                         }
-                        Text("Key API được giữ trên server. Có thể tắt quyền gửi bất kỳ lúc nào.", fontSize = 12.sp)
+                        Text("Key nhập trên điện thoại được mã hóa bằng Android Keystore. Có thể xóa key hoặc tắt quyền gửi bất kỳ lúc nào.", fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(10.dp))
                         Button(
                             onClick = {
-                                if (listOf(proxyUrl, ollamaUrl).any { it.isNotBlank() && !it.trim().startsWith("https://") }) {
+                                if (selectedEngine == ExecutionEngineMode.API_PROXY && proxyUrl.isNotBlank() && !proxyUrl.trim().startsWith("https://")) {
                                     onToast("Địa chỉ proxy phải dùng HTTPS")
                                     return@Button
                                 }
                                 planner.apiProxyUrl = proxyUrl
                                 planner.apiDeviceToken = deviceToken
                                 planner.cloudConsent = cloudConsent
-                                planner.ollamaServerUrl = ollamaUrl.trim()
+                                val saved = runCatching {
+                                    ApiProvider.entries.forEach { planner.saveProviderApiKey(it, providerKeys[it].orEmpty()) }
+                                }
+                                if (saved.isFailure) {
+                                    onToast("Không lưu được key API. Bác thử lại giúp con nhé.")
+                                    return@Button
+                                }
+                                planner.allowMeteredProviders = allowMetered
                                 planner.executionMode = selectedEngine
                                 onToast("Đã lưu cấu hình AI!")
                             },

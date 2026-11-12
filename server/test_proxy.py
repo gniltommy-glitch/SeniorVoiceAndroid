@@ -85,18 +85,9 @@ class GatewayTests(unittest.TestCase):
     def test_empty_plan_is_clarification(self):
         validate_plan({'spoken_response': 'Bác nói lại nhé', 'steps': []})
 
-    def test_local_route_never_calls_public_api(self):
-        calls = []
-        def send(url, headers, body):
-            calls.append(url)
-            self.assertEqual(body['format'], SCHEMA)
-            return {'done': True, 'message': {'content': json.dumps(plan())}}
-        gw = self.gateway(send, LOCAL_ENABLED='1')
-        self.assertEqual(gw.plan('test', local_only=True)['provider'], 'ollama')
-        self.assertEqual(calls, ['http://127.0.0.1:11434/api/chat'])
-        gw = self.gateway(send, LOCAL_ENABLED='')
-        self.assertIsNone(gw.plan('test', local_only=True))
-        self.assertEqual(len(calls), 1)
+    def test_only_supported_hosted_providers_are_called(self):
+        gw = self.gateway(lambda *_: groq(plan()), PROVIDER_ORDER='unknown,groq')
+        self.assertEqual(gw.plan('test')['provider'], 'groq')
 
     def test_schema_matches_android(self):
         from pathlib import Path
