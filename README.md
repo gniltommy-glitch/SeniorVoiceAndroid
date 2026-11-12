@@ -88,3 +88,7 @@ python3 -m unittest discover -s server -v
 Kiểm thử gồm thứ tự provider, timeout/quota/schema, ngắt mạch, token/rate limit, chặn giá paid, hết promo và không dùng giá stale. Bài test dùng dữ liệu giả, không tiêu quota. Kotlin/Compose được kiểm tra trực tiếp bằng compiler cache khi Gradle không mở được socket khóa nội bộ. APK gốc vẫn là bản cũ.
 
 Các phần còn lại của báo cáo: benchmark hiện 46 câu, baseline là ablation của app; cần ≥100 câu và đối sánh thật, test Android 12–15 trên nhiều máy, đo p50/p95/RAM/tải và chất lượng model, xử lý mơ hồ người nhận. Chưa tuyên bố sẵn sàng phổ cập.
+
+## Dữ liệu mẫu trong repo public
+
+`family_memory.json` dùng tên hư cấu, để trống số điện thoại/địa chỉ và tọa độ 0. Không có hồ sơ sức khỏe thật. Cần nhập sổ tay trên thiết bị trước khi thử gọi/nhắn hoặc dẫn đường; dữ liệu mẫu không tự thực hiện cuộc gọi tới người thật. Bản dữ liệu trước khi ẩn danh chỉ được giữ tại máy, trong thư mục đã bị Git loại trừ.

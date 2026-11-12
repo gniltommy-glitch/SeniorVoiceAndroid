@@ -1,0 +1,7 @@
+# Replace with a hostname you control, routed to this server.
+voice.example.com {
+    @planner path /v1/plan /v1/local-plan
+    reverse_proxy @planner 127.0.0.1:8787
+    respond 404
+    # Do not enable access/body logging for voice requests.
+}

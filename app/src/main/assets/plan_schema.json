@@ -1,0 +1,120 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "spoken_response": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "tool": {
+            "type": "string",
+            "enum": [
+              "check_weather",
+              "set_medication_alarm",
+              "insert_calendar_event",
+              "call_or_message_family",
+              "navigate_or_book_ride"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "channel": {
+                "type": "string"
+              },
+              "contact_name": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "destination_name": {
+                "type": "string"
+              },
+              "hour": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "latitude": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "location_name": {
+                "type": "string"
+              },
+              "longitude": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "minute": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "nickname": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "time": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "address",
+              "channel",
+              "contact_name",
+              "date",
+              "description",
+              "destination_name",
+              "hour",
+              "label",
+              "latitude",
+              "location",
+              "location_name",
+              "longitude",
+              "message",
+              "minute",
+              "mode",
+              "nickname",
+              "phone",
+              "time",
+              "title"
+            ]
+          }
+        },
+        "required": [
+          "tool",
+          "params"
+        ]
+      }
+    }
+  },
+  "required": [
+    "spoken_response",
+    "steps"
+  ]
+}

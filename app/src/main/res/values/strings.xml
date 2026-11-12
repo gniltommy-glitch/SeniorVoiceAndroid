@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trợ Lý Ông Bà AI</string>
+    <string name="accessibility_service_label">Hỗ Trợ Thao Tác Tự Động Cho Ông Bà (SeniorVoice AI)</string>
+    <string name="accessibility_service_description">Giúp tự động chạm nút gửi tin nhắn hoặc xác nhận đặt xe hộ người cao tuổi sau khi ông bà đã xác nhận bằng giọng nói.</string>
+</resources>

@@ -1,0 +1,316 @@
+{
+  "senior_profile": {
+    "full_name": "Người dùng minh họa",
+    "preferred_title": "Bác",
+    "age": 70,
+    "home_address": "",
+    "latitude": 0.0,
+    "longitude": 0.0,
+    "medical_notes": ""
+  },
+  "contacts": [
+    {
+      "id": "contact_ut",
+      "nicknames": [
+        "thằng Út",
+        "con Út",
+        "anh Minh",
+        "chú Út",
+        "thằng Minh",
+        "Út Minh",
+        "cu Út"
+      ],
+      "full_name": "Người thân Út",
+      "relationship": "Con trai Út",
+      "phone": "",
+      "zalo": "",
+      "preferred_channel": "ZALO",
+      "address": "",
+      "notes": "Liên hệ minh họa; nhập thông tin thật trên thiết bị trước khi dùng."
+    },
+    {
+      "id": "contact_thao",
+      "nicknames": [
+        "con Thảo",
+        "cái Thảo",
+        "bé Thảo",
+        "chị Thảo",
+        "Phương Thảo"
+      ],
+      "full_name": "Người thân Thảo",
+      "relationship": "Con gái",
+      "phone": "",
+      "zalo": "",
+      "preferred_channel": "ZALO",
+      "address": "",
+      "notes": "Liên hệ minh họa; nhập thông tin thật trên thiết bị trước khi dùng."
+    },
+    {
+      "id": "contact_hai",
+      "nicknames": [
+        "chị Hai",
+        "con Hai",
+        "cái Lan",
+        "chị Lan",
+        "Hai Lan"
+      ],
+      "full_name": "Người thân Hai",
+      "relationship": "Con gái trưởng",
+      "phone": "",
+      "zalo": "",
+      "preferred_channel": "SMS",
+      "address": "",
+      "notes": "Liên hệ minh họa; nhập thông tin thật trên thiết bị trước khi dùng."
+    },
+    {
+      "id": "contact_bs_hung",
+      "nicknames": [
+        "bác sĩ Hùng",
+        "BS Hùng",
+        "thầy thuốc Hùng",
+        "chú Hùng bác sĩ"
+      ],
+      "full_name": "Bác sĩ mẫu",
+      "relationship": "Bác sĩ điều trị chính",
+      "phone": "",
+      "zalo": "",
+      "preferred_channel": "CALL",
+      "address": "",
+      "notes": "Liên hệ minh họa; nhập thông tin thật trên thiết bị trước khi dùng."
+    },
+    {
+      "id": "contact_chu_tu",
+      "nicknames": [
+        "chú Tư",
+        "ông Tư",
+        "bác Tư",
+        "anh Tư cờ tướng"
+      ],
+      "full_name": "Người quen Tư",
+      "relationship": "Bạn hàng xóm / CLB Dưỡng sinh",
+      "phone": "",
+      "zalo": "",
+      "preferred_channel": "CALL",
+      "address": "",
+      "notes": "Liên hệ minh họa; nhập thông tin thật trên thiết bị trước khi dùng."
+    },
+    {
+      "id": "contact_ba_bay",
+      "nicknames": [
+        "bà Bảy",
+        "cô Bảy",
+        "dì Bảy",
+        "bác Bảy đi chùa"
+      ],
+      "full_name": "Người quen Bảy",
+      "relationship": "Bạn đồng tu đi chùa",
+      "phone": "",
+      "zalo": "",
+      "preferred_channel": "CALL",
+      "address": "",
+      "notes": "Liên hệ minh họa; nhập thông tin thật trên thiết bị trước khi dùng."
+    }
+  ],
+  "places": [
+    {
+      "id": "place_cho_ray",
+      "nicknames": [
+        "viện Chợ Rẫy",
+        "bệnh viện Chợ Rẫy",
+        "BV Chợ Rẫy",
+        "Chợ Rẫy",
+        "chỗ khám bác sĩ Hùng"
+      ],
+      "full_name": "Bệnh viện Chợ Rẫy (Khoa Khám Bệnh & Nội Tim Mạch)",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "HOSPITAL",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_dh_y_duoc",
+      "nicknames": [
+        "viện Đại học Y Dược",
+        "bệnh viện Y Dược",
+        "BV Đại học Y Dược",
+        "Y Dược"
+      ],
+      "full_name": "Bệnh viện Đại học Y Dược TP.HCM (Cơ sở 1)",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "HOSPITAL",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_chua_vinh_nghiem",
+      "nicknames": [
+        "chùa Vĩnh Nghiêm",
+        "Vĩnh Nghiêm",
+        "chùa lớn đường Nam Kỳ"
+      ],
+      "full_name": "Chùa Vĩnh Nghiêm",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "TEMPLE",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_chua_an_quang",
+      "nicknames": [
+        "chùa Ấn Quang",
+        "Ấn Quang",
+        "chùa Sư Vạn Hạnh"
+      ],
+      "full_name": "Tổ đình Ấn Quang",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "TEMPLE",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_nha_thao",
+      "nicknames": [
+        "nhà con Thảo",
+        "nhà cái Thảo",
+        "nhà Thảo Phú Nhuận",
+        "bên con Thảo"
+      ],
+      "full_name": "Nhà con gái Phương Thảo",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "FAMILY_HOME",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_nha_ut",
+      "nicknames": [
+        "nhà thằng Út",
+        "nhà con Út",
+        "nhà anh Minh",
+        "nhà Út Quận 7"
+      ],
+      "full_name": "Nhà con trai Út (Nguyễn Văn Minh)",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "FAMILY_HOME",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_tao_dan",
+      "nicknames": [
+        "công viên Tao Đàn",
+        "Tao Đàn",
+        "chỗ tập dưỡng sinh",
+        "sân cờ chú Tư"
+      ],
+      "full_name": "Công viên Tao Đàn (Khu tập dưỡng sinh)",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "PARK",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    },
+    {
+      "id": "place_cho_an_dong",
+      "nicknames": [
+        "chợ An Đông",
+        "An Đông",
+        "chợ gần nhà"
+      ],
+      "full_name": "Chợ An Đông",
+      "address": "",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "category": "MARKET",
+      "reminder_note": "Địa điểm minh họa; cần cấu hình trước khi dùng."
+    }
+  ],
+  "medications": [
+    {
+      "id": "med_huyet_ap",
+      "keywords": [
+        "thuốc huyết áp",
+        "huyết áp",
+        "viên huyết áp sáng",
+        "thuốc tim mạch"
+      ],
+      "name": "Thuốc Huyết Áp (Amlor 5mg)",
+      "default_hour": 7,
+      "default_minute": 0,
+      "dosage": "Dữ liệu minh họa, không phải chỉ định y tế."
+    },
+    {
+      "id": "med_tieu_duong",
+      "keywords": [
+        "thuốc tiểu đường",
+        "tiểu đường",
+        "thuốc đường huyết"
+      ],
+      "name": "Thuốc Tiểu Đường (Metformin 500mg)",
+      "default_hour": 11,
+      "default_minute": 30,
+      "dosage": "Dữ liệu minh họa, không phải chỉ định y tế."
+    },
+    {
+      "id": "med_bo_khop",
+      "keywords": [
+        "thuốc bổ khớp",
+        "thuốc đau khớp",
+        "thuốc xương khớp",
+        "glucosamine"
+      ],
+      "name": "Thuốc Xương Khớp (Glucosamine)",
+      "default_hour": 19,
+      "default_minute": 30,
+      "dosage": "Dữ liệu minh họa, không phải chỉ định y tế."
+    },
+    {
+      "id": "med_mo_mau",
+      "keywords": [
+        "thuốc mỡ máu",
+        "mỡ máu",
+        "viên tối"
+      ],
+      "name": "Thuốc Mỡ Máu (Atorvastatin 10mg)",
+      "default_hour": 20,
+      "default_minute": 30,
+      "dosage": "Dữ liệu minh họa, không phải chỉ định y tế."
+    }
+  ],
+  "dialect_dictionary": {
+    "sáng mơi": "sáng mai",
+    "chiều mơi": "chiều mai",
+    "bữa mơi": "ngày mai",
+    "mơi": "ngày mai",
+    "bữa ni": "hôm nay",
+    "hôm ni": "hôm nay",
+    "mần răng": "làm sao",
+    "thời tiết răng": "thời tiết thế nào",
+    "răng rồi": "thế nào rồi",
+    "rứa": "vậy",
+    "mô rồi": "đâu rồi",
+    "bên tê": "bên kia",
+    "bữa nớ": "hôm đó",
+    "chi mô": "gì đâu",
+    "hổng": "không",
+    "dzô": "vào",
+    "coi thử trời": "kiểm tra thời tiết trời",
+    "ngó thử trời": "kiểm tra thời tiết trời",
+    "biểu": "nhắn tin bảo",
+    "bẩu": "nhắn tin bảo",
+    "kêu": "gọi điện hoặc nhắn",
+    "hú": "gọi điện",
+    "dây thép": "gọi điện thoại",
+    "xế chiều": "15:00",
+    "chập tối": "18:30",
+    "tờ mờ sáng": "05:30",
+    "đứng bóng": "12:00"
+  },
+  "_sample_data_notice": "Dữ liệu hư cấu phục vụ kiểm thử; không chứa danh tính, số điện thoại, địa chỉ nhà hay hồ sơ sức khỏe thật. Điền sổ tay trên thiết bị trước khi sử dụng."
+}

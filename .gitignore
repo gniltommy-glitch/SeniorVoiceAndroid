@@ -1,0 +1,12 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+.env
+.env.*
+!.env.example
+__pycache__/
+
+.DS_Store
+server/private-fixtures/
+*.pending.txt
